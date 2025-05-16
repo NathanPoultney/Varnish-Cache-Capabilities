@@ -45,7 +45,7 @@ acl trusted {
 
 # Secret key for JWT validation
 sub vcl_init {
-    # Initialize the load balancing director
+    # Initialise the load balancing director
     new api_cluster = directors.round_robin();
     api_cluster.add_backend(api_server);
     api_cluster.add_backend(default);
@@ -53,19 +53,19 @@ sub vcl_init {
     # Set up a counter for rate limiting
     new rate_limiter = std.counter();
     
-    # Initialize shared memory segments for distributed rate limiting
+    # Initialise shared memory segments for distributed rate limiting
     new rate_limit_data = std.shmlog("rate_limits", 64M);
 }
 
 # Custom function for base64 auth validation
 sub authenticate_user {
     # Basic auth credentials
-    if (!req.http.Authorization ~ "^Basic ") {
+    if (!req.http.Authorisation ~ "^Basic ") {
         return false;
     }
     
     # Extract and decode the credentials
-    set req.http.Auth = regsub(req.http.Authorization, "^Basic ", "");
+    set req.http.Auth = regsub(req.http.Authorisation, "^Basic ", "");
     set req.http.Auth = std.base64decode(req.http.Auth);
     
     # Check against our credential store (simplified example)
@@ -87,7 +87,7 @@ sub handle_cors {
     # Set CORS headers for actual requests
     set resp.http.Access-Control-Allow-Origin = "*";
     set resp.http.Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS";
-    set resp.http.Access-Control-Allow-Headers = "Content-Type, Authorization, X-Requested-With";
+    set resp.http.Access-Control-Allow-Headers = "Content-Type, Authorisation, X-Requested-With";
     set resp.http.Access-Control-Max-Age = "86400";
 }
 
@@ -189,12 +189,12 @@ sub vcl_recv {
     # API authentication using JWT
     if (req.url ~ "^/api/private/") {
         # Check for JWT token
-        if (!req.http.Authorization ~ "^Bearer ") {
+        if (!req.http.Authorisation ~ "^Bearer ") {
             return(synth(401, "JWT token required"));
         }
         
         # JWT validation would go here (simplified)
-        set req.http.Auth-Token = regsub(req.http.Authorization, "^Bearer ", "");
+        set req.http.Auth-Token = regsub(req.http.Authorisation, "^Bearer ", "");
         if (req.http.Auth-Token != "valid_token_placeholder") {
             return(synth(403, "Invalid token"));
         }
@@ -206,8 +206,8 @@ sub vcl_recv {
     # Request normalization
     call normalize_request;
     
-    # Do not cache requests with authorization or certain cookies
-    if (req.http.Authorization || 
+    # Do not cache requests with authorisation or certain cookies
+    if (req.http.Authorisation || 
         (req.http.Cookie && req.http.Cookie ~ "session|login|auth")) {
         return(pass);
     }
@@ -231,7 +231,7 @@ sub vcl_recv {
     return(hash);
 }
 
-# Hash customization
+# Hash customisation
 sub vcl_hash {
     # Default hash data
     hash_data(req.url);
@@ -305,7 +305,7 @@ sub vcl_backend_response {
     }
     
     # Don't cache authenticated responses
-    if (bereq.http.Authorization) {
+    if (bereq.http.Authorisation) {
         set beresp.uncacheable = true;
         return(deliver);
     }
@@ -367,13 +367,13 @@ sub vcl_synth {
     # Custom error responses
     if (resp.status == 401) {
         set resp.http.WWW-Authenticate = "Basic realm=Restricted";
-        set resp.body = {"error": "Authentication required", "status": 401};
+        set resp.body = "{\"error\": \"Authentication required\", \"status\": 401}";
     } elsif (resp.status == 429) {
-        set resp.body = {"error": "Rate limit exceeded", "status": 429};
+        set resp.body = "{\"error\": \"Rate limit exceeded\", \"status\": 429}";
     } elsif (resp.status == 403) {
-        set resp.body = {"error": "Access forbidden", "status": 403};
+        set resp.body = "{\"error\": \"Access forbidden\", \"status\": 403}";
     } else {
-        set resp.body = {"error": resp.reason, "status": resp.status};
+        set resp.body = "{\"error\": \"" + resp.reason + "\", \"status\": " + resp.status + "}";
     }
     
     # Add security headers to synthetic responses too
