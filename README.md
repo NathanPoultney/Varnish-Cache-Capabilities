@@ -27,7 +27,6 @@ This repository showcases advanced Varnish Cache configurations that demonstrate
 - VMOD dependencies:
   - `std` (included in Varnish)
   - `directors` (included in Varnish)
-  - `headerplus` (custom module - installation instructions below)
 
 ## Quick Start
 
@@ -41,7 +40,6 @@ This repository showcases advanced Varnish Cache configurations that demonstrate
 2. Install required VMODs:
    ```bash
    apt-get install varnish-modules  # Most standard modules
-   # For headerplus (custom module), follow installation in docs/vmod-installation.md
    ```
 
 3. Deploy the configuration:
@@ -91,3 +89,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Official Varnish Documentation](https://varnish-cache.org/docs/)
 - [VCL Reference](https://varnish-cache.org/docs/trunk/reference/vcl.html)
 - [Varnish Book](https://book.varnish-software.com/)
+- [HeaderPlus VMOD](https://docs.varnish-software.com/varnish-enterprise/vmods/headerplus/)
